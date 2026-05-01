@@ -65,11 +65,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
             { email: user.email },
             { $set: { loginAttempts: newAttempts, lockUntil: lockUntil } }
           );
-          throw new CustomError(
-            newAttempts >= 3
-              ? `LOCKED_${lockUntil?.getTime()}`
-              : "Invalid credentials."
-          );
+          throw new CustomError(newAttempts >= 3 ? `LOCKED_${lockUntil?.getTime()}` : "Invalid credentials.");
         }
 
         if (user.loginAttempts > 0 || user.lockUntil) {
@@ -84,9 +80,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
 
         let isKnownDevice = false;
         if (user.knownDevices && Array.isArray(user.knownDevices)) {
-          isKnownDevice = user.knownDevices.some(
-            (device: any) => device.userAgent === userAgent
-          );
+          isKnownDevice = user.knownDevices.some((device: any) => device.userAgent === userAgent);
         }
 
         if (!isKnownDevice) {
@@ -112,7 +106,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
           { email: user.email },
           {
             twoFactorOTP: otp,
-            twoFactorOTPExpires: new Date(Date.now() + 5 * 60 * 1000),
+            twoFactorOTPExpires: new Date(Date.now() + 5 * 60 * 1000)
           }
         );
 

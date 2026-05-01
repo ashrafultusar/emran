@@ -154,10 +154,9 @@ export async function forgotPassword(formData: FormData) {
         const resetToken = crypto.randomBytes(32).toString("hex");
         const resetTokenExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-        await User.updateOne(
-            { email },
-            { $set: { resetToken, resetTokenExpires } }
-        );
+        user.resetToken = resetToken;
+        user.resetTokenExpires = resetTokenExpires;
+        await user.save();
 
         await sendPasswordResetEmail(email, resetToken);
 
@@ -173,6 +172,8 @@ export async function resetPassword(token: string, newPassword: string) {
     if (!token || !newPassword) {
         return { error: "Token and new password are required." };
     }
+
+    const cleanToken = token.trim();
 
     // Strong password validation
     if (newPassword.length < 8) {
@@ -194,24 +195,25 @@ export async function resetPassword(token: string, newPassword: string) {
     try {
         await connectDB();
 
-        const user = await User.findOne({
-            resetToken: token,
-            resetTokenExpires: { $gt: new Date() },
-        });
+        const user = await User.findOne({ resetToken: cleanToken });
 
         if (!user) {
-            return { error: "Invalid or expired reset link." };
+            return { error: "Invalid reset link." };
+        }
+
+        if (!user.resetTokenExpires || user.resetTokenExpires.getTime() < Date.now()) {
+            return { error: "Expired reset link." };
         }
 
         const hashedPassword = await bcrypt.hash(newPassword, 12);
 
-        await User.updateOne(
-            { _id: user._id },
-            {
-                $set: { password: hashedPassword },
-                $unset: { resetToken: "", resetTokenExpires: "" },
-            }
-        );
+        user.password = hashedPassword;
+        user.resetToken = undefined;
+        user.resetTokenExpires = undefined;
+        user.loginAttempts = 0;
+        user.lockUntil = undefined;
+
+        await user.save();
 
         return { success: "Password reset successfully! You can now login." };
     } catch (error) {

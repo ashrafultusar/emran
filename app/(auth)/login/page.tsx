@@ -41,7 +41,6 @@ const LoginPage = () => {
     return () => clearInterval(interval);
   }, [lockUntil]);
 
-  // Handle Login Submit
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -228,7 +227,6 @@ const LoginPage = () => {
           </form>
         )}
 
-        {/* Footer */}
         {!otpRequired && (
           <div className="mt-8 text-center">
             <p className="text-slate-400 text-sm">
